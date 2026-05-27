@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="易牙居">
+    <meta name="theme-color" content="#000000">
+    <title>易牙居 - Diablo II 資料庫</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+
+        body {
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #1a1a1a;
+            padding: 12px 15px;
+            padding-top: max(12px, env(safe-area-inset-top));
+            border-bottom: 2px solid #ffd700;
+            text-align: center;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        header h1 {
+            color: #ffd700;
+            font-size: 22px;
+            margin-bottom: 2px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        header p {
+            color: #999;
+            font-size: 11px;
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 35%;
+            background: #0d0d0d;
+            border-right: 1px solid #444;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+        }
+
+        #content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 12px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+            background: #1a1a1a;
+        }
+
+        .section {
+            border-bottom: 1px solid #333;
+        }
+
+        .section-title {
+            background: #222;
+            color: #ffd700;
+            padding: 10px 12px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title:active {
+            background: #333;
+        }
+
+        .section-title::after {
+            content: '▼';
+            font-size: 10px;
+            transition: transform 0.2s;
+        }
+
+        .section-title.collapsed::after {
+            transform: rotate(-90deg);
+        }
+
+        .section-items {
+            display: none;
+            background: #1a1a1a;
+            padding: 6px;
+            gap: 4px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .section-items.show {
+            display: grid;
+        }
+
+        .item-link {
+            background: #333;
+            color: #0ff;
+            border: 1px solid #555;
+            padding: 8px 6px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: block;
+            word-break: break-word;
+            line-height: 1.2;
+        }
+
+        .item-link:active {
+            background: #444;
+            color: #fff;
+            border-color: #ffd700;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .content-section h2 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #555;
+            padding-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .content-section h3 {
+            color: #0ff;
+            margin-top: 10px;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .content-section table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin-bottom: 10px;
+        }
+
+        .content-section table th,
+        .content-section table td {
+            padding: 4px;
+            border: 1px solid #555;
+            text-align: left;
+        }
+
+        .content-section table th {
+            background: #333;
+            color: #ffd700;
+        }
+
+        .content-section table tr:nth-child(even) {
+            background: #2a2a2a;
+        }
+
+        .content-section ul,
+        .content-section ol {
+            margin-left: 16px;
+            margin-bottom: 8px;
+        }
+
+        .content-section li {
+            margin-bottom: 3px;
+            line-height: 1.3;
+            font-size: 12px;
+        }
+
+        .content-section p {
+            line-height: 1.4;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #999;
+            padding: 15px;
+        }
+
+        @media (orientation: landscape) {
+            header h1 { font-size: 16px; }
+            header p { display: none; }
+            #sidebar { width: 45%; }
+            .section-items { grid-template-columns: 1fr 1fr 1fr; }
+        }
+
+        @supports (padding: max(0px)) {
+            #sidebar {
+                padding-left: max(0px, env(safe-area-inset-left));
+                padding-right: max(0px, env(safe-area-inset-right));
+            }
+            #content {
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚔️ 易牙居</h1>
+        <p>Diablo II 完整資料庫</p>
+    </header>
+
+    <div class="main">
+        <div id="sidebar">
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">🎁 道具物品</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="showContent('welcome')">首頁</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器\nhttp://localhost:8081')">道具清單</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">魔法屬性</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">獨特物品</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">套裝物品</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">魔法物品</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">普通物品</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">寶石</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">傳奇配方</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">複製物品</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">1.08物品</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">1.09物品</a>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">✨ 符文</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="showContent('runes')">符文資料</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">符文語</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">1.11符文語</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">台灣符文語</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">符文語查詢</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">符文配置</a>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">👥 職業</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="showContent('classes')">職業介紹</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">亞馬遜</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">刺客</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">野蠻人</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">聖騎士</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">魔法師</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">死靈法師</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">德魯伊</a>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">🗺️ 劇情關卡</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="alert('需要連線伺服器')">Act 1</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">Act 2</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">Act 3</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">Act 5</a>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">📋 更新內容</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="alert('需要連線伺服器')">1.11更新</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">1.13更新</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">暗黑改版</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">四騎士關卡</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">超級怪物</a>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">ℹ️ 其他資訊</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="showContent('about')">遊戲介紹</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">其他資訊</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">神殿效果</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">遊戲技巧</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">下載軟體</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">影片欣賞</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">超值物品</a>
+                    <a class="item-link" onclick="alert('需要連線伺服器')">易牙介紹</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="content">
+            <div id="welcome" class="content-section active">
+                <h2>⚔️ 易牙居</h2>
+                <p>Diablo II 完整資料庫</p>
+                <h3>使用說明</h3>
+                <ul>
+                    <li>點擊左側菜單查看內容</li>
+                    <li>此版本為離線版本，僅包含部分內容</li>
+                    <li>完整版本需要連線到伺服器：http://localhost:8081</li>
+                </ul>
+            </div>
+
+            <div id="runes" class="content-section">
+                <h2>✨ 符文資料</h2>
+                <p>Diablo II 中的符文是特殊物品，可以鑲嵌到武器和防具中。</p>
+                <h3>符文介紹</h3>
+                <ul>
+                    <li><strong>El 符文</strong> - 最低級符文，提供基礎加成</li>
+                    <li><strong>Eld 符文</strong> - 低級符文</li>
+                    <li><strong>Tir 符文</strong> - 中級符文</li>
+                    <li><strong>Nef 符文</strong> - 中級符文</li>
+                    <li><strong>Eth 符文</strong> - 高級符文</li>
+                    <li><strong>Ith 符文</strong> - 高級符文</li>
+                    <li><strong>Tal 符文</strong> - 高級符文</li>
+                    <li><strong>Ral 符文</strong> - 高級符文</li>
+                    <li><strong>Ort 符文</strong> - 非常高級符文</li>
+                    <li><strong>Thul 符文</strong> - 非常高級符文</li>
+                </ul>
+                <h3>符文合成</h3>
+                <p>符文可以通過特定的組合製作成符文語，賦予裝備強大的屬性。</p>
+            </div>
+
+            <div id="classes" class="content-section">
+                <h2>👥 職業介紹</h2>
+                <p>Diablo II 中有 7 個可選職業，每個職業都有獨特的技能和玩法風格。</p>
+                <h3>職業列表</h3>
+                <ul>
+                    <li><strong>亞馬遜</strong> - 遠距離職業，擅長使用弓箭和標槍</li>
+                    <li><strong>野蠻人</strong> - 近戰職業，擅長使用雙手武器和盾牌</li>
+                    <li><strong>死靈法師</strong> - 魔法職業，擅長詛咒和召喚</li>
+                    <li><strong>魔法師</strong> - 魔法職業，擅長火、冷、閃電魔法</li>
+                    <li><strong>聖騎士</strong> - 平衡職業，擅長光環和聖殿騎士技能</li>
+                    <li><strong>德魯伊</strong> - 自然職業，擅長變身和元素魔法</li>
+                    <li><strong>刺客</strong> - 近戰職業，擅長陷阱和武術技能</li>
+                </ul>
+            </div>
+
+            <div id="about" class="content-section">
+                <h2>ℹ️ 遊戲介紹</h2>
+                <p><strong>Diablo II</strong> 是由暴雪娛樂開發的經典動作 RPG 遊戲，於 2000 年發布。</p>
+                <h3>遊戲特色</h3>
+                <ul>
+                    <li>5 個主要關卡，每個關卡都有獨特的環境和敵人</li>
+                    <li>多達 150+ 種獨特物品</li>
+                    <li>複雜的物品系統，包括符文、寶石和魔法屬性</li>
+                    <li>7 個不同職業，各具特色</li>
+                    <li>支援多人遊戲模式</li>
+                    <li>隨機地圖生成，每次遊戲體驗都不同</li>
+                </ul>
+                <h3>易牙居資料庫</h3>
+                <p>易牙居是一個完整的 Diablo II 遊戲資料庫，收集了所有物品、職業、符文、關卡等詳細資訊。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSection(element) {
+            const items = element.nextElementSibling;
+            element.classList.toggle('collapsed');
+            items.classList.toggle('show');
+        }
+
+        function showContent(sectionId) {
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(el => el.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        // 初始化：展開第一個 section
+        document.querySelectorAll('.section-title').forEach((el, index) => {
+            if (index === 0) {
+                el.classList.add('collapsed');
+                el.nextElementSibling.classList.add('show');
+            }
+        });
+
+        // 防止頁面彈性滾動
+        document.addEventListener('touchmove', (e) => {
+            if (!e.target.closest('#sidebar') && !e.target.closest('#content')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>

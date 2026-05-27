@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="big5">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="易牙居">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23000' width='180' height='180' rx='40'/><text x='90' y='130' font-size='100' fill='%23ffd700' text-anchor='middle' font-weight='bold'>易</text></svg>">
+    <title>易牙居 - Diablo II</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #1a1a1a;
+            padding: 15px 20px;
+            padding-top: max(15px, env(safe-area-inset-top));
+            border-bottom: 2px solid #ffd700;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            color: #ffd700;
+            font-size: 24px;
+            margin-bottom: 2px;
+        }
+
+        header p {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 40%;
+            background: #1a1a1a;
+            border-right: 1px solid #555;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 20px;
+        }
+
+        #content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 15px;
+            padding-bottom: max(15px, env(safe-area-inset-bottom));
+        }
+
+        .section {
+            border-bottom: 1px solid #333;
+        }
+
+        .section-title {
+            background: #222;
+            color: #ffd700;
+            padding: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            font-size: 14px;
+        }
+
+        .section-title:active {
+            background: #333;
+        }
+
+        .section-items {
+            display: none;
+            background: #222;
+            padding: 8px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .section-items.show {
+            display: grid;
+        }
+
+        .item-link {
+            background: #333;
+            color: #0ff;
+            border: 1px solid #555;
+            padding: 8px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 11px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: block;
+            word-break: break-word;
+        }
+
+        .item-link:active {
+            background: #444;
+            color: #fff;
+        }
+
+        .content-section {
+            display: none;
+            background: #1a1a1a;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 12px;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .content-section h2 {
+            color: #ffd700;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #555;
+            padding-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .content-section h3 {
+            color: #0ff;
+            margin-top: 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .content-section table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+
+        .content-section table th,
+        .content-section table td {
+            padding: 6px;
+            border: 1px solid #555;
+            text-align: left;
+        }
+
+        .content-section table th {
+            background: #333;
+            color: #ffd700;
+        }
+
+        .content-section table tr:nth-child(even) {
+            background: #2a2a2a;
+        }
+
+        .content-section ul,
+        .content-section ol {
+            margin-left: 16px;
+            margin-bottom: 8px;
+        }
+
+        .content-section li {
+            margin-bottom: 4px;
+            line-height: 1.4;
+            font-size: 13px;
+        }
+
+        .content-section p {
+            line-height: 1.5;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+
+        /* 橫屏模式 */
+        @media (orientation: landscape) {
+            header {
+                padding: 8px 20px;
+            }
+
+            header h1 {
+                font-size: 18px;
+                margin-bottom: 0;
+            }
+
+            header p {
+                display: none;
+            }
+
+            #sidebar {
+                width: 50%;
+            }
+        }
+
+        /* 安全區域 */
+        @supports (padding: max(0px)) {
+            #sidebar {
+                padding-left: max(0px, env(safe-area-inset-left));
+                padding-right: max(0px, env(safe-area-inset-right));
+            }
+
+            #content {
+                padding-left: max(15px, env(safe-area-inset-left));
+                padding-right: max(15px, env(safe-area-inset-right));
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚔️ 易牙居</h1>
+        <p>Diablo II 資料庫</p>
+    </header>
+
+    <div class="main">
+        <div id="sidebar">
+            <!-- 道具物品 -->
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">🎁 道具物品</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="loadContent('itemmenu.htm')">道具清單</a>
+                    <a class="item-link" onclick="loadContent('magicmenu.htm')">魔法屬性</a>
+                    <a class="item-link" onclick="loadContent('Unique.htm')">獨特物品</a>
+                    <a class="item-link" onclick="loadContent('Set0.htm')">套裝物品</a>
+                    <a class="item-link" onclick="loadContent('MAGIC.htm')">魔法物品</a>
+                    <a class="item-link" onclick="loadContent('item.htm')">普通物品</a>
+                    <a class="item-link" onclick="loadContent('gems.htm')">寶石</a>
+                    <a class="item-link" onclick="loadContent('cube.htm')">傳奇配方</a>
+                    <a class="item-link" onclick="loadContent('dupeitems.htm')">複製物品</a>
+                    <a class="item-link" onclick="loadContent('108item.htm')">1.08物品</a>
+                    <a class="item-link" onclick="loadContent('109item.htm')">1.09物品</a>
+                </div>
+            </div>
+
+            <!-- 符文 -->
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">✨ 符文</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="loadContent('Runes.htm')">符文資料</a>
+                    <a class="item-link" onclick="loadContent('RWords.htm')">符文語</a>
+                    <a class="item-link" onclick="loadContent('1.11runew.htm')">1.11符文語</a>
+                    <a class="item-link" onclick="loadContent('TRWords.htm')">台灣符文語</a>
+                    <a class="item-link" onclick="loadContent('Runemenu.htm')">符文語查詢</a>
+                    <a class="item-link" onclick="loadContent('item2.htm')">符文配置</a>
+                </div>
+            </div>
+
+            <!-- 職業 -->
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">👥 職業</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="loadContent('Ama.htm')">亞馬遜</a>
+                    <a class="item-link" onclick="loadContent('Ass.htm')">刺客</a>
+                    <a class="item-link" onclick="loadContent('Bar.htm')">野蠻人</a>
+                    <a class="item-link" onclick="loadContent('Pal.htm')">聖騎士</a>
+                    <a class="item-link" onclick="loadContent('Sor.htm')">魔法師</a>
+                    <a class="item-link" onclick="loadContent('Nec.htm')">死靈法師</a>
+                    <a class="item-link" onclick="loadContent('Dru.htm')">德魯伊</a>
+                </div>
+            </div>
+
+            <!-- 劇情 -->
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">🗺️ 劇情關卡</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="loadContent('Act1.htm')">Act 1</a>
+                    <a class="item-link" onclick="loadContent('Act2.htm')">Act 2</a>
+                    <a class="item-link" onclick="loadContent('Act3.htm')">Act 3</a>
+                    <a class="item-link" onclick="loadContent('Act5.htm')">Act 5</a>
+                </div>
+            </div>
+
+            <!-- 更新內容 -->
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">📋 更新內容</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="loadContent('1.11.htm')">1.11更新</a>
+                    <a class="item-link" onclick="loadContent('1.13.htm')">1.13更新</a>
+                    <a class="item-link" onclick="loadContent('DC.htm')">暗黑改版</a>
+                    <a class="item-link" onclick="loadContent('kings.htm')">四騎士關卡</a>
+                    <a class="item-link" onclick="loadContent('superboss.htm')">超級怪物</a>
+                </div>
+            </div>
+
+            <!-- 其他資訊 -->
+            <div class="section">
+                <div class="section-title" onclick="toggleSection(this)">ℹ️ 其他資訊</div>
+                <div class="section-items">
+                    <a class="item-link" onclick="loadContent('PAGE.htm')">遊戲介紹</a>
+                    <a class="item-link" onclick="loadContent('PAGE0.htm')">其他資訊</a>
+                    <a class="item-link" onclick="loadContent('shrines.htm')">神殿效果</a>
+                    <a class="item-link" onclick="loadContent('iasmenu.htm')">遊戲技巧</a>
+                    <a class="item-link" onclick="loadContent('download.htm')">下載軟體</a>
+                    <a class="item-link" onclick="loadContent('videomenu.htm')">影片欣賞</a>
+                    <a class="item-link" onclick="loadContent('superitem.htm')">超值物品</a>
+                    <a class="item-link" onclick="loadContent('IYA.htm')">易牙介紹</a>
+                    <a class="item-link" onclick="loadContent('IYA2.htm')">易牙信息</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="content">
+            <div id="welcome" class="content-section active">
+                <h2>⚔️ 易牙居</h2>
+                <p>Diablo II 完整資料庫</p>
+                <p style="margin-top: 12px; font-size: 12px; color: #999;">點擊左側菜單查看內容</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/sw-register.js"></script>
+    <script>
+        function toggleSection(element) {
+            const items = element.nextElementSibling;
+            items.classList.toggle('show');
+        }
+
+        function loadContent(filename) {
+            const content = document.getElementById('content');
+            const welcome = document.getElementById('welcome');
+            
+            if (welcome) welcome.style.display = 'none';
+            content.innerHTML = '<div class="loading">載入中...</div>';
+            
+            fetch(filename)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const body = doc.body.innerHTML;
+                    content.innerHTML = body;
+                })
+                .catch(error => {
+                    content.innerHTML = '<div class="content-section active"><h2>❌ 載入失敗</h2></div>';
+                });
+        }
+
+        // 防止彈性滾動
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('#sidebar') || e.target.closest('#content')) {
+                return;
+            }
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html>
